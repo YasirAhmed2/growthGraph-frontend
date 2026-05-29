@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle2, Circle, Clock } from 'lucide-react';
 
-const RoadmapView = ({ roadmap }) => {
+const RoadmapView = ({ roadmap, completedSteps = [], onToggleStep }) => {
     if (!roadmap || roadmap.length === 0) return null;
 
     return (
@@ -12,28 +12,29 @@ const RoadmapView = ({ roadmap }) => {
             <div className="space-y-12">
                 {roadmap.map((step, index) => {
                     const isEven = index % 2 === 0;
+                    const isCompleted = completedSteps.includes(index);
 
                     return (
                         <div key={index} className={`relative flex flex-col md:flex-row gap-8 ${isEven ? 'md:flex-row-reverse' : ''} items-center`}>
 
                             {/* Timeline Node */}
-                            <div className="absolute left-[14px] md:left-1/2 top-0 md:-translate-x-1/2 w-8 h-8 rounded-full bg-[#0A0A0A] border-4 border-violet-500 z-10 shadow-[0_0_20px_rgba(139,92,246,0.5)] flex items-center justify-center">
-                                <div className="w-2.5 h-2.5 rounded-full bg-white" />
+                            <div className={`absolute left-[14px] md:left-1/2 top-0 md:-translate-x-1/2 w-8 h-8 rounded-full bg-[#0A0A0A] border-4 ${isCompleted ? 'border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]' : 'border-violet-500 shadow-[0_0_20px_rgba(139,92,246,0.5)]'} z-10 flex items-center justify-center transition-all duration-500`}>
+                                <div className={`w-2.5 h-2.5 rounded-full ${isCompleted ? 'bg-emerald-400' : 'bg-white'} transition-colors duration-500`} />
                             </div>
 
                             {/* Content Card */}
                             <div className="w-full md:w-[calc(50%-40px)] ml-12 md:ml-0 group">
-                                <div className="relative bg-[#1a1a1e] border border-white/10 p-6 rounded-2xl shadow-xl hover:shadow-[0_0_30px_rgba(139,92,246,0.15)] hover:border-violet-500/30 transition-all duration-300 hover:-translate-y-1">
+                                <div className={`relative bg-[#1a1a1e] border p-6 rounded-2xl shadow-xl transition-all duration-500 hover:-translate-y-1 ${isCompleted ? 'border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)]' : 'border-white/10 hover:border-violet-500/30 hover:shadow-[0_0_30px_rgba(139,92,246,0.15)]'}`}>
 
                                     {/* Connector Line (Desktop) */}
                                     <div className={`hidden md:block absolute top-4 ${isEven ? 'left-full' : 'right-full'} w-10 h-[2px] bg-indigo-500/30`} />
 
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
-                                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-violet-500/20 text-violet-300 text-xs font-bold border border-violet-500/30">
+                                            <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold border transition-colors duration-500 ${isCompleted ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' : 'bg-violet-500/20 border-violet-500/30 text-violet-300'}`}>
                                                 {index + 1}
                                             </span>
-                                            <h3 className="text-lg font-bold text-white group-hover:text-violet-300 transition-colors">
+                                            <h3 className={`text-lg font-bold transition-colors duration-500 ${isCompleted ? 'text-emerald-100 group-hover:text-emerald-300' : 'text-white group-hover:text-violet-300'}`}>
                                                 {step.step}
                                             </h3>
                                         </div>
@@ -43,18 +44,28 @@ const RoadmapView = ({ roadmap }) => {
                                         </span>
                                     </div>
 
-                                    <p className="text-slate-400 text-sm leading-relaxed border-l-2 border-white/5 pl-4 group-hover:border-violet-500/30 transition-colors">
+                                    <p className={`text-sm leading-relaxed border-l-2 pl-4 transition-colors duration-500 ${isCompleted ? 'text-slate-400 border-emerald-500/30' : 'text-slate-400 border-white/5 group-hover:border-violet-500/30'}`}>
                                         {step.description}
                                     </p>
 
                                     {/* Action Tags */}
                                     <div className="mt-4 flex flex-wrap gap-2">
-                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold bg-black/40 px-2 py-1 rounded">
-                                            Status: Pending
-                                        </span>
-                                        <span className="text-[10px] uppercase tracking-wider text-indigo-400 font-bold bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/20 cursor-pointer hover:bg-indigo-500/20 transition-colors">
-                                            Mark as Done
-                                        </span>
+                                        {isCompleted ? (
+                                            <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
+                                                Status: Completed
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold bg-black/40 px-2.5 py-1 rounded border border-transparent">
+                                                Status: Pending
+                                            </span>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => onToggleStep && onToggleStep(index)}
+                                            className={`text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded border cursor-pointer transition-colors duration-300 ${isCompleted ? 'text-amber-400 bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20' : 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20'}`}
+                                        >
+                                            {isCompleted ? 'Mark as Pending' : 'Mark as Done'}
+                                        </button>
                                     </div>
                                 </div>
                             </div>

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
     const [scrolled, setScrolled] = useState(false);
+    const { isAuthenticated, user, logout } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -12,8 +15,19 @@ const Navbar = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    const handleSignOut = () => {
+        logout();
+        navigate('/');
+    };
+
+    // Determine links dynamically
+    const navItems = ['Home', 'Features', 'About'];
+    if (isAuthenticated) {
+        navItems.push('Dashboard');
+    }
+
     return (
-        <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-[#050510]/80 backdrop-blur-2xl border-b border-white/5 py-3' : 'bg-transparent py-5'}`}>
+        <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-[#050510]/85 backdrop-blur-2xl border-b border-white/5 py-3' : 'bg-transparent py-5'}`}>
             <div className="container flex items-center justify-between px-4 md:px-6">
                 <Link to="/" className="flex items-center gap-3 group">
                     <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] transition-all duration-300 group-hover:scale-105 overflow-hidden">
@@ -27,7 +41,7 @@ const Navbar = () => {
                 </Link>
 
                 <div className="hidden md:flex items-center gap-8">
-                    {['Home', 'Features', 'About'].map((item) => (
+                    {navItems.map((item) => (
                         <Link
                             key={item}
                             to={item === 'Features' ? '/#features' : item === 'Home' ? '/' : `/${item.toLowerCase()}`}
@@ -40,15 +54,44 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => document.getElementById('analyze-section')?.scrollIntoView({ behavior: 'smooth' })}
-                        className="group relative inline-flex h-9 items-center justify-center overflow-hidden rounded-full bg-white text-black px-6 text-sm font-bold shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black cursor-pointer"
-                    >
-                        <span className="relative flex items-center gap-2">
-                            Get Started
-                        </span>
-                        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-violet-400/0 via-violet-400/40 to-violet-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
-                    </button>
+                    {isAuthenticated ? (
+                        <div className="flex items-center gap-4">
+                            <span className="hidden sm:inline-block text-xs font-semibold text-slate-300 tracking-wide bg-white/5 border border-white/5 px-3 py-1.5 rounded-full">
+                                Terminal: <span className="text-emerald-400 font-bold">{user?.name?.split(' ')[0]}</span>
+                            </span>
+                            <button
+                                onClick={handleSignOut}
+                                className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                            >
+                                Sign Out
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-3">
+                            <Link
+                                to="/auth"
+                                className="text-sm font-bold text-slate-400 hover:text-white transition-colors px-3 py-1.5"
+                            >
+                                Log In
+                            </Link>
+                            <button
+                                onClick={() => {
+                                    const element = document.getElementById('analyze-section');
+                                    if (element) {
+                                        element.scrollIntoView({ behavior: 'smooth' });
+                                    } else {
+                                        navigate('/#analyze-section');
+                                    }
+                                }}
+                                className="group relative inline-flex h-9 items-center justify-center overflow-hidden rounded-full bg-white text-black px-6 text-sm font-bold shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black cursor-pointer"
+                            >
+                                <span className="relative flex items-center gap-2">
+                                    Get Started
+                                </span>
+                                <div className="absolute inset-0 -z-10 bg-gradient-to-r from-violet-400/0 via-violet-400/40 to-violet-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </nav>
@@ -56,3 +99,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

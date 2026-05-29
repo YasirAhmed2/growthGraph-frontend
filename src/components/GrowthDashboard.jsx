@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
+import axios from 'axios';
 import { Download } from 'lucide-react';
 import RoadmapView from './RoadmapView';
 
@@ -75,10 +76,61 @@ const CircularProgress = ({ value, label, size = 120, color = "#8b5cf6", delay =
 
 const GrowthDashboard = ({ data, onReset }) => {
     const [isDownloading, setIsDownloading] = useState(false);
+    const [roadmapSteps, setRoadmapSteps] = useState(data.roadmap || []);
+
+    // Sync state when data changes (e.g. loaded a new roadmap from history)
+    useEffect(() => {
+        setRoadmapSteps(data.roadmap || []);
+    }, [data]);
 
     if (!data) return null;
 
     const scores = data.growthScore || { explorationExecution: 50, depthBreadth: 50, consistencyIndex: 50 };
+
+    const handleToggleStep = async (index) => {
+        if (!data._id) {
+            // Local fallback if no database ID is available
+            const updatedSteps = [...roadmapSteps];
+            updatedSteps[index] = { ...updatedSteps[index], isCompleted: !updatedSteps[index].isCompleted };
+            setRoadmapSteps(updatedSteps);
+            return;
+        }
+
+        const isCurrentlyCompleted = !!roadmapSteps[index]?.isCompleted;
+        
+        // Optimistic Update for zero-latency user experience
+        const updatedSteps = [...roadmapSteps];
+        updatedSteps[index] = { ...updatedSteps[index], isCompleted: !isCurrentlyCompleted };
+        setRoadmapSteps(updatedSteps);
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.patch(
+                `http://localhost:5000/api/history/${data._id}/step`,
+                { stepIndex: index, isCompleted: !isCurrentlyCompleted },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            if (response.data && response.data.roadmap) {
+                setRoadmapSteps(response.data.roadmap);
+            }
+        } catch (error) {
+            console.error("Failed to update step status in database:", error);
+            // Rollback optimistic update on network/server failure
+            const rollbackSteps = [...roadmapSteps];
+            rollbackSteps[index] = { ...rollbackSteps[index], isCompleted: isCurrentlyCompleted };
+            setRoadmapSteps(rollbackSteps);
+            alert("Could not sync progress with the database. Please try again.");
+        }
+    };
+
+    const completedSteps = roadmapSteps
+        .map((step, idx) => step.isCompleted ? idx : -1)
+        .filter(idx => idx !== -1);
+
+    const roadmapProgress = roadmapSteps.length > 0
+        ? Math.round((completedSteps.length / roadmapSteps.length) * 100)
+        : 0;
 
     const downloadPDF = async () => {
         setIsDownloading(true);
@@ -166,9 +218,10 @@ const GrowthDashboard = ({ data, onReset }) => {
 
                     {/* 2. Key Metrics (Top Right) */}
                     <Card title="Growth Signals" className="md:col-span-4" delay={100}>
-                        <div className="grid grid-cols-2 gap-4 h-full items-center">
-                            <CircularProgress value={scores.depthBreadth} label="Depth" color="#8b5cf6" delay={200} size={100} />
-                            <CircularProgress value={scores.explorationExecution} label="Execution" color="#10b981" delay={300} size={100} />
+                        <div className="grid grid-cols-3 gap-2 h-full items-center">
+                            <CircularProgress value={scores.depthBreadth} label="Depth" color="#8b5cf6" delay={200} size={80} />
+                            <CircularProgress value={scores.explorationExecution} label="Execution" color="#10b981" delay={300} size={80} />
+                            <CircularProgress value={roadmapProgress} label="Roadmap" color="#3b82f6" delay={400} size={80} />
                         </div>
                     </Card>
 
@@ -222,9 +275,13 @@ const GrowthDashboard = ({ data, onReset }) => {
                     </Card>
 
                     {/* 5. Detailed Execution Roadmap (Full Width Bottom) */}
-                    {data.roadmap && (
+                    {roadmapSteps && (
                         <Card title="Your Roadmap" className="md:col-span-12" delay={400}>
-                            <RoadmapView roadmap={data.roadmap} />
+                            <RoadmapView 
+                                roadmap={roadmapSteps} 
+                                completedSteps={completedSteps}
+                                onToggleStep={handleToggleStep}
+                            />
                         </Card>
                     )}
 

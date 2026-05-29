@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Sparkles, Plus, X, ChevronRight, Lightbulb } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const COMMON_SKILLS = [
     "JavaScript", "Python", "React", "Node.js", "TypeScript", "Java",
@@ -8,6 +10,9 @@ const COMMON_SKILLS = [
 ];
 
 const GrowthForm = ({ onAnalysisComplete }) => {
+    const { isAuthenticated, token } = useAuth();
+    const navigate = useNavigate();
+
     const [formData, setFormData] = useState({
         skills: [],
         projects: '',
@@ -74,6 +79,12 @@ const GrowthForm = ({ onAnalysisComplete }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!isAuthenticated) {
+            navigate('/auth', { state: { from: { pathname: '/' } } });
+            return;
+        }
+
         setLoading(true);
         try {
             // Convert skills array back to string for the API format if needed, 
@@ -83,7 +94,9 @@ const GrowthForm = ({ onAnalysisComplete }) => {
                 skills: formData.skills.join(', ')
             };
 
-            const response = await axios.post('http://localhost:5000/api/analyze', payload);
+            const response = await axios.post('http://localhost:5000/api/analyze', payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
             setTimeout(() => {
                 if (onAnalysisComplete) {
@@ -240,9 +253,14 @@ const GrowthForm = ({ onAnalysisComplete }) => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full h-16 rounded-xl bg-white text-black font-bold text-lg tracking-wide hover:bg-slate-200 focus:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.1)] group"
+                            className="w-full h-16 rounded-xl bg-white text-black font-bold text-lg tracking-wide hover:bg-slate-200 focus:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.1)] group cursor-pointer"
                         >
-                            {loading ? (
+                            {!isAuthenticated ? (
+                                <>
+                                    <span>Sign In to Generate Blueprint</span>
+                                    <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                                </>
+                            ) : loading ? (
                                 <>
                                     <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                                     <span>Processing Signals...</span>
