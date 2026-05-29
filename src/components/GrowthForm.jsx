@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Sparkles, Plus, X, ChevronRight, Lightbulb } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config';
 
 const COMMON_SKILLS = [
     "JavaScript", "Python", "React", "Node.js", "TypeScript", "Java",
@@ -52,7 +53,7 @@ const GrowthForm = ({ onAnalysisComplete }) => {
 
         setLoadingSuggestions(true);
         try {
-            const response = await axios.post('http://localhost:5000/api/suggest-projects', {
+            const response = await axios.post(`${API_BASE_URL}/api/suggest-projects`, {
                 skills: formData.skills.join(', ')
             });
             setSuggestedProjects(response.data);
@@ -94,7 +95,7 @@ const GrowthForm = ({ onAnalysisComplete }) => {
                 skills: formData.skills.join(', ')
             };
 
-            const response = await axios.post('http://localhost:5000/api/analyze', payload, {
+            const response = await axios.post(`${API_BASE_URL}/api/analyze`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

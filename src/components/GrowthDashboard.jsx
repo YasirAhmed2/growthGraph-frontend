@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import axios from 'axios';
 import { Download } from 'lucide-react';
 import RoadmapView from './RoadmapView';
+import { API_BASE_URL } from '../config';
 
 const Card = ({ title, children, className = "", delay = 0 }) => (
     <div
@@ -106,7 +107,7 @@ const GrowthDashboard = ({ data, onReset }) => {
         try {
             const token = localStorage.getItem('token');
             const response = await axios.patch(
-                `http://localhost:5000/api/history/${data._id}/step`,
+                `${API_BASE_URL}/api/history/${data._id}/step`,
                 { stepIndex: index, isCompleted: !isCurrentlyCompleted },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

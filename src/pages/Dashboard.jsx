@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import GrowthDashboard from '../components/GrowthDashboard';
 import { Calendar, User, Briefcase, Plus, ArrowLeft, Trash2, Cpu, BarChart2 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 const Dashboard = () => {
     const { user, token, logout } = useAuth();
@@ -26,7 +27,7 @@ const Dashboard = () => {
     const fetchHistory = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('http://localhost:5000/api/history', {
+            const response = await axios.get(`${API_BASE_URL}/api/history`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setHistory(response.data);
@@ -45,7 +46,7 @@ const Dashboard = () => {
 
         setActionLoading(true);
         try {
-            await axios.delete(`http://localhost:5000/api/history/${id}`, {
+            await axios.delete(`${API_BASE_URL}/api/history/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setHistory(history.filter(item => item._id !== id));
